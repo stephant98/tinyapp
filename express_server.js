@@ -3,7 +3,8 @@ const app = express();
 const PORT = 8080;
 
 function generateRandomString() {
-  return Math.random().toString(36).substring(7);
+  const randomNumber = Math.random().toString(36).substring(7);
+  return randomNumber;
 }
 
 app.set("view engine", "ejs");
