@@ -43,16 +43,29 @@ app.get("/", (req, res) => {
 });
 
 app.get("/login", (req, res) => {
-  
+  const userObject = userDatabase[req.cookies.user_id]
+  const templateVars = { urls: urlDatabase , user: userObject};
+  res.render('login', templateVars);
 })
 
 app.post("/login", (req, res) => {
-  res.cookie('username', req.body.username)
-  res.redirect('/urls')
+  const inputEmail = req.body.email;
+  const inputPassword = req.body.password;
+
+  for (const key in userDatabase) {
+    
+    if(userDatabase[key].email === inputEmail && userDatabase[key].password === inputPassword) {
+      res.cookie('user_id', key)
+      res.redirect('/urls')
+      return;
+    }
+  }
+  res.sendStatus(403)
+  
 })
 
 app.post("/logout", (req, res) => {
-  res.clearCookie('username');
+  res.clearCookie('user_id');
   res.redirect('/urls')
 })
 
