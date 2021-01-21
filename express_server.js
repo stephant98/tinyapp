@@ -141,6 +141,7 @@ const urlsForUser = function(id) {
 
 app.get("/urls", (req, res) => {
   if(userDatabase[req.cookies.user_id]){
+    console.log(userDatabase[req.cookies.user_id])
     const userObject = userDatabase[req.cookies.user_id];
     const templateVars = { urls: urlsForUser(userObject.id) , user: userObject };
     res.render("urls_index",templateVars);
@@ -152,7 +153,13 @@ app.get("/urls", (req, res) => {
 
 app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
-  urlDatabase[shortURL] = req.body.longURL;
+  urlDatabase[shortURL] = { 
+    longURL: req.body.longURL,
+
+    userID: userDatabase[req.cookies.user_id].id
+  };
+
+  console.log(urlDatabase)
   res.redirect(`/urls/${shortURL}`);
 });
 
@@ -184,6 +191,7 @@ app.get("/urls/:shortURL", (req, res) => {
     longURL:  urlDatabase[req.params.shortURL].longURL, 
     user: userObject
   };
+  console.log(templateVars.longURL)
   res.render("urls_show", templateVars);
 });
 
@@ -191,8 +199,10 @@ app.get("/urls/:shortURL", (req, res) => {
 app.post('/urls/:id', (req, res) => {
   if(req.cookies.user_id){
     const shortURL = req.params.id;
+    
     const longURL = req.body.inputOfUser;
     urlDatabase[shortURL].longURL = longURL;
+    console.log(urlDatabase)
     res.redirect('/urls')
   } else {
     res.redirect("/urls")
