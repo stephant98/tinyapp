@@ -1,10 +1,18 @@
 const express = require('express');
-const cookieParser = require('cookie-parser');
+const cookieSession = require('cookie-session')
 const bcrypt = require('bcrypt');
-const app = express();
-app.use(cookieParser())
-
 const PORT = 8080;
+
+const app = express();
+
+app.use(cookieSession({
+  name: 'session',
+  keys: ['key1', 'key2'],
+
+}))
+
+
+
 
 
 function generateRandomString() {
@@ -52,7 +60,7 @@ app.get("/", (req, res) => {
 });
 
 app.get("/login", (req, res) => {
-  const userObject = userDatabase[req.cookies.user_id]
+  const userObject = userDatabase[req.session.user_id]
   const templateVars = { urls: urlDatabase , user: userObject};
   res.render('login', templateVars);
 })
@@ -66,7 +74,7 @@ app.post("/login", (req, res) => {
     
     
     if(userDatabase[key].email === inputEmail && bcrypt.compareSync(inputPassword, userDatabase[key].password)) {
-      res.cookie('user_id', key)
+      req.session["user_id"] = key
       res.redirect('/urls')
       return;
     }
@@ -75,7 +83,7 @@ app.post("/login", (req, res) => {
 })
 
 app.post("/logout", (req, res) => {
-  res.clearCookie('user_id');
+  req.session = null;
   res.redirect('/urls')
 })
 
@@ -84,7 +92,7 @@ app.get("/urls.json", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
-  const userObject = userDatabase[req.cookies.user_id]
+  const userObject = userDatabase[req.session.user_id]
   const templateVars = { urls: urlDatabase , user: userObject};
   res.render("register", templateVars);
 })
@@ -118,7 +126,7 @@ app.post("/register", (req, res) => {
 
     console.log(userDatabase);
     console.log(userID)
-    res.cookie("user_id", userID)
+    req.session["user_id"] = userID;
     res.redirect("/urls")
 
 
@@ -147,9 +155,9 @@ const urlsForUser = function(id) {
 
 
 app.get("/urls", (req, res) => {
-  if(userDatabase[req.cookies.user_id]){
-    console.log(userDatabase[req.cookies.user_id])
-    const userObject = userDatabase[req.cookies.user_id];
+  if(userDatabase[req.session.user_id]){
+    console.log(userDatabase[req.session.user_id])
+    const userObject = userDatabase[req.session.user_id];
     const templateVars = { urls: urlsForUser(userObject.id) , user: userObject };
     res.render("urls_index",templateVars);
   } else {
@@ -163,7 +171,7 @@ app.post("/urls", (req, res) => {
   urlDatabase[shortURL] = { 
     longURL: req.body.longURL,
 
-    userID: userDatabase[req.cookies.user_id].id
+    userID: userDatabase[req.session.user_id].id
   };
 
   console.log(urlDatabase)
@@ -171,8 +179,8 @@ app.post("/urls", (req, res) => {
 });
 
 app.get('/urls/new', (req, res) => {
-  if(userDatabase[req.cookies.user_id]) {
-    const userObject = userDatabase[req.cookies.user_id]
+  if(userDatabase[req.session.user_id]) {
+    const userObject = userDatabase[req.session.user_id]
     const templateVars = { urls: urlDatabase , user: userObject};
     res.render('urls_new', templateVars);
   } else {
@@ -192,7 +200,7 @@ app.get('/u/:shortURL', (req, res) => {
 
 
 app.get("/urls/:shortURL", (req, res) => {
-  const userObject = userDatabase[req.cookies.user_id]
+  const userObject = userDatabase[req.session.user_id]
   const templateVars = { 
     shortURL: req.params.shortURL , 
     longURL:  urlDatabase[req.params.shortURL].longURL, 
@@ -204,7 +212,7 @@ app.get("/urls/:shortURL", (req, res) => {
 
 // inputOfUser matches name of input form
 app.post('/urls/:id', (req, res) => {
-  if(req.cookies.user_id){
+  if(req.session.user_id){
     const shortURL = req.params.id;
     
     const longURL = req.body.inputOfUser;
@@ -217,7 +225,7 @@ app.post('/urls/:id', (req, res) => {
 })
 
 app.post('/urls/:shortURL/delete', (req, res) => {
-  if(req.cookies.user_id){
+  if(req.session.user_id){
     const idToDelete = req.params.shortURL;
     delete urlDatabase[idToDelete];
     res.redirect('/urls');
