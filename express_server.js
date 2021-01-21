@@ -18,8 +18,8 @@ const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  "b2xVn2": { longURL: "http://www.lighthouselabs.ca", userID: "user2RandomID"} ,
+  "9sm5xK": { longURL: "http://www.google.com", userID: "userRandomID"} 
   
 };
 
@@ -130,14 +130,23 @@ app.post("/urls", (req, res) => {
 });
 
 app.get('/urls/new', (req, res) => {
-  const userObject = userDatabase[req.cookies.user_id]
-  const templateVars = { urls: urlDatabase , user: userObject};
-  res.render('urls_new', templateVars);
+  if(userDatabase[req.cookies.user_id]) {
+    const userObject = userDatabase[req.cookies.user_id]
+    const templateVars = { urls: urlDatabase , user: userObject};
+    res.render('urls_new', templateVars);
+  } else {
+    res.redirect("/login")
+  }
+  
 });
 
 app.get('/u/:shortURL', (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL];
-  res.redirect(longURL);
+  const urlObject = urlDatabase[req.params.shortURL];
+  if(!urlObject || !urlObject.longURL) {
+    res.sendStatus(400)
+  } else {
+    res.redirect(urlObject.longURL);
+  }
 });
 
 
@@ -145,7 +154,7 @@ app.get("/urls/:shortURL", (req, res) => {
   const userObject = userDatabase[req.cookies.user_id]
   const templateVars = { 
     shortURL: req.params.shortURL , 
-    longURL:  urlDatabase[req.params.shortURL], 
+    longURL:  urlDatabase[req.params.shortURL].longURL, 
     user: userObject
   };
   res.render("urls_show", templateVars);
@@ -155,7 +164,7 @@ app.get("/urls/:shortURL", (req, res) => {
 app.post('/urls/:id', (req, res) => {
   const shortURL = req.params.id;
   const longURL = req.body.inputOfUser;
-  urlDatabase[shortURL] = longURL;
+  urlDatabase[shortURL].longURL = longURL;
   res.redirect('/urls')
 })
 
