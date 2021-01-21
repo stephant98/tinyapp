@@ -1,3 +1,4 @@
+const { getUserByEmail, generateRandomString } = require('./helpers')
 const express = require('express');
 const cookieSession = require('cookie-session')
 const bcrypt = require('bcrypt');
@@ -11,26 +12,20 @@ app.use(cookieSession({
 
 }))
 
-
-
-
-
-function generateRandomString() {
-  const randomNumber = Math.random().toString(36).substring(7);
-  return randomNumber;
-}
-
 app.set("view engine", "ejs");
+
+
 
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
+
+
 
 const urlDatabase = {
   "b2xVn2": { longURL: "http://www.lighthouselabs.ca", userID: "user2RandomID"} ,
   "9sm5xK": { longURL: "http://www.google.com", userID: "userRandomID"} 
   
 };
-
 
 
 
@@ -55,15 +50,21 @@ const userDatabase = {
 
 
 
+
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
+
+
 
 app.get("/login", (req, res) => {
   const userObject = userDatabase[req.session.user_id]
   const templateVars = { urls: urlDatabase , user: userObject};
   res.render('login', templateVars);
 })
+
+
+
 
 app.post("/login", (req, res) => {
   const inputEmail = req.body.email;
@@ -80,22 +81,34 @@ app.post("/login", (req, res) => {
     }
   }
   res.sendStatus(403)
-})
+});
+
+
+
+
 
 app.post("/logout", (req, res) => {
   req.session = null;
   res.redirect('/urls')
-})
+});
+
+
+
 
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
+
+
+
 
 app.get("/register", (req, res) => {
   const userObject = userDatabase[req.session.user_id]
   const templateVars = { urls: urlDatabase , user: userObject};
   res.render("register", templateVars);
 })
+
+
 
 app.post("/register", (req, res) => {
   const userID = generateRandomString();
@@ -106,22 +119,19 @@ app.post("/register", (req, res) => {
   if(inputEmail === "" || inputPassword === "") {
     res.sendStatus(400)
   }
-  
-  for (const key in userDatabase) {
+
     
-    if(userDatabase[key].email === inputEmail) {
+    if(getUserByEmail(inputEmail, userDatabase)){
       res.sendStatus(400)
       return;
     }
-  }
-
-
+  
     const newUser = {
       id: userID,
       email: inputEmail,
       password: hashedPassword
     }
-    // 
+     
     userDatabase[userID] = newUser;
 
     console.log(userDatabase);
@@ -132,10 +142,11 @@ app.post("/register", (req, res) => {
 
 })
 
+
+
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
-
 
 
 
@@ -151,9 +162,6 @@ const urlsForUser = function(id) {
 }
 
 
-
-
-
 app.get("/urls", (req, res) => {
   if(userDatabase[req.session.user_id]){
     console.log(userDatabase[req.session.user_id])
@@ -165,6 +173,9 @@ app.get("/urls", (req, res) => {
   }
   
 });
+
+
+
 
 app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
@@ -178,6 +189,9 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${shortURL}`);
 });
 
+
+
+
 app.get('/urls/new', (req, res) => {
   if(userDatabase[req.session.user_id]) {
     const userObject = userDatabase[req.session.user_id]
@@ -189,6 +203,8 @@ app.get('/urls/new', (req, res) => {
   
 });
 
+
+
 app.get('/u/:shortURL', (req, res) => {
   const urlObject = urlDatabase[req.params.shortURL];
   if(!urlObject || !urlObject.longURL) {
@@ -197,6 +213,8 @@ app.get('/u/:shortURL', (req, res) => {
     res.redirect(urlObject.longURL);
   }
 });
+
+
 
 
 app.get("/urls/:shortURL", (req, res) => {
@@ -209,6 +227,8 @@ app.get("/urls/:shortURL", (req, res) => {
   console.log(templateVars.longURL)
   res.render("urls_show", templateVars);
 });
+
+
 
 // inputOfUser matches name of input form
 app.post('/urls/:id', (req, res) => {
@@ -224,6 +244,8 @@ app.post('/urls/:id', (req, res) => {
   }
 })
 
+
+
 app.post('/urls/:shortURL/delete', (req, res) => {
   if(req.session.user_id){
     const idToDelete = req.params.shortURL;
@@ -234,6 +256,8 @@ app.post('/urls/:shortURL/delete', (req, res) => {
   }
   
 })
+
+
 
 
 app.listen(PORT, () => {
