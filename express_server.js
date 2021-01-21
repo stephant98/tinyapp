@@ -23,6 +23,10 @@ const urlDatabase = {
   
 };
 
+
+
+
+
 const userDatabase = {
   "userRandomID": {
     id: "userRandomID", 
@@ -117,10 +121,33 @@ app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
+
+
+
+const urlsForUser = function(id) {
+  let newObj = {};
+  
+  for (const key in urlDatabase) {
+    if (urlDatabase[key].userID === id) {
+      newObj[key] = urlDatabase[key].longURL 
+    }
+  }
+  return newObj;
+}
+
+
+
+
+
 app.get("/urls", (req, res) => {
-  const userObject = userDatabase[req.cookies.user_id];
-  const templateVars = { urls: urlDatabase , user: userObject};
-  res.render("urls_index",templateVars);
+  if(userDatabase[req.cookies.user_id]){
+    const userObject = userDatabase[req.cookies.user_id];
+    const templateVars = { urls: urlsForUser(userObject.id) , user: userObject };
+    res.render("urls_index",templateVars);
+  } else {
+    res.send("Login first")
+  }
+  
 });
 
 app.post("/urls", (req, res) => {
@@ -162,16 +189,25 @@ app.get("/urls/:shortURL", (req, res) => {
 
 // inputOfUser matches name of input form
 app.post('/urls/:id', (req, res) => {
-  const shortURL = req.params.id;
-  const longURL = req.body.inputOfUser;
-  urlDatabase[shortURL].longURL = longURL;
-  res.redirect('/urls')
+  if(req.cookies.user_id){
+    const shortURL = req.params.id;
+    const longURL = req.body.inputOfUser;
+    urlDatabase[shortURL].longURL = longURL;
+    res.redirect('/urls')
+  } else {
+    res.redirect("/urls")
+  }
 })
 
 app.post('/urls/:shortURL/delete', (req, res) => {
-  const idToDelete = req.params.shortURL;
-  delete urlDatabase[idToDelete];
-  res.redirect('/urls');
+  if(req.cookies.user_id){
+    const idToDelete = req.params.shortURL;
+    delete urlDatabase[idToDelete];
+    res.redirect('/urls');
+  } else {
+    res.redirect("/urls")
+  }
+  
 })
 
 
