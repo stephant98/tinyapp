@@ -37,6 +37,11 @@ const userDatabase = {
     id: "user2RandomID", 
     email: "user2@example.com", 
     password: "dishwasher-funk"
+  },
+  l3jggvl: {
+    id: 'l3jggvl',
+    email: 'stephantruchsess@gmail.com',
+    password: '$2b$10$SkItsnFL98C5S09T6pVsQO.cToN4cLgZWqZx8YIiwocMwjR7PwypG'
   }
 }
 
@@ -55,17 +60,18 @@ app.get("/login", (req, res) => {
 app.post("/login", (req, res) => {
   const inputEmail = req.body.email;
   const inputPassword = req.body.password;
+  console.log
 
   for (const key in userDatabase) {
     
-    if(userDatabase[key].email === inputEmail && userDatabase[key].password === inputPassword) {
+    
+    if(userDatabase[key].email === inputEmail && bcrypt.compareSync(inputPassword, userDatabase[key].password)) {
       res.cookie('user_id', key)
       res.redirect('/urls')
       return;
     }
   }
   res.sendStatus(403)
-  
 })
 
 app.post("/logout", (req, res) => {
@@ -87,6 +93,7 @@ app.post("/register", (req, res) => {
   const userID = generateRandomString();
   const inputEmail = req.body.email;
   const inputPassword = req.body.password;
+  const hashedPassword = bcrypt.hashSync(inputPassword, 10)
 
   if(inputEmail === "" || inputPassword === "") {
     res.sendStatus(400)
@@ -104,7 +111,7 @@ app.post("/register", (req, res) => {
     const newUser = {
       id: userID,
       email: inputEmail,
-      password: inputPassword
+      password: hashedPassword
     }
     // 
     userDatabase[userID] = newUser;
