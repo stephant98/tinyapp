@@ -15,7 +15,7 @@ const getUserByEmail = function(email, database) {
 };
 
 
-const urlsForUser = function(id) {
+const urlsForUser = function(id, urlDatabase) {
   let newObj = {};
   
   for (const key in urlDatabase) {
