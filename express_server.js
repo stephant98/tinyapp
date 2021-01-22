@@ -68,7 +68,7 @@ app.post("/login", (req, res) => {
 
 
   if(!user || !bcrypt.compareSync(inputPassword, user.password)) {
-    res.sendStatus(403)
+    res.render("badCredentials")
     return;
   }
 
@@ -114,13 +114,13 @@ app.post("/register", (req, res) => {
   const hashedPassword = bcrypt.hashSync(inputPassword, 10)
 
   if(inputEmail === "" || inputPassword === "") {
-    res.sendStatus(400)
+    res.render("badCredentials")
     return;
   }
 
     
     if(getUserByEmail(inputEmail, userDatabase)){
-      res.sendStatus(400)
+      res.render("emailExists")
       return;
     }
   
@@ -151,7 +151,7 @@ app.get("/urls", (req, res) => {
     const templateVars = { urls: urlsForUser(userObject.id, urlDatabase) , user: userObject };
     res.render("urls_index",templateVars);
   } else {
-    res.send("Login first")
+    res.render("loginFirst")
   }
   
 });
@@ -198,8 +198,10 @@ app.get("/urls/:shortURL", (req, res) => {
   };
   console.log(templateVars.longURL)
   res.render("urls_show", templateVars);
+} else if(userObject){
+  res.render("notOwner")
 } else {
-  res.sendStatus(400)
+  res.render("loginFirst")
 }
 });
 
